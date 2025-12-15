@@ -15,6 +15,6 @@ A full-stack Airbnb-inspired web application where users can list, explore, and 
 
 - **Frontend**: Tailwind CSS
 - **Backend**: Node.js, Express.js, MongoDB
-- **Other**: JWT Auth, Multer/Cloudinary, Leaflet.js
+- **Other**: JWT Auth, Multer/Cloudinary.
 
 
