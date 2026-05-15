@@ -1,4 +1,75 @@
 const Listing=require("../models/listing");
+const ExpressError=require("../utils/ExpressError");
+
+const getImageData=(file)=>{
+  return {
+    url:file.secure_url || file.url || file.path,
+    filename:file.public_id || file.filename,
+  };
+};
+
+const normalizeListing=(listing)=>{
+  if(!listing){
+    return listing;
+  }
+
+  if(!listing.amenities){
+    listing.amenities=[];
+  }else if(!Array.isArray(listing.amenities)){
+    listing.amenities=[listing.amenities];
+  }
+
+  listing.country=listing.country || "Kenya";
+  listing.pricing=normalizePricing(listing.pricing);
+  return listing;
+};
+
+const normalizeNumber=(value, fallback)=>{
+  if(value === "" || value === null || typeof value === "undefined"){
+    return fallback;
+  }
+
+  const numberValue=Number(value);
+  return Number.isFinite(numberValue) ? numberValue : fallback;
+};
+
+const normalizeDate=(value)=>{
+  return value ? value : undefined;
+};
+
+const normalizePricing=(pricing={})=>{
+  const normalizedPricing={...pricing};
+  const eventInputs=Array.isArray(pricing.events)
+    ? pricing.events
+    : Object.values(pricing.events || {});
+
+  normalizedPricing.smartPricingEnabled=
+    pricing.smartPricingEnabled === true ||
+    pricing.smartPricingEnabled === "true" ||
+    pricing.smartPricingEnabled === "on";
+
+  normalizedPricing.cleaningFee=normalizeNumber(pricing.cleaningFee,0);
+  normalizedPricing.serviceFeePercent=normalizeNumber(pricing.serviceFeePercent,8);
+  normalizedPricing.minStay=normalizeNumber(pricing.minStay,1);
+  normalizedPricing.occupancyTarget=normalizeNumber(pricing.occupancyTarget,70);
+  normalizedPricing.weekendMultiplier=normalizeNumber(pricing.weekendMultiplier,1.15);
+  normalizedPricing.peakSeasonMultiplier=normalizeNumber(pricing.peakSeasonMultiplier,1.25);
+  normalizedPricing.offPeakMultiplier=normalizeNumber(pricing.offPeakMultiplier,0.9);
+  normalizedPricing.peakSeasonStart=normalizeDate(pricing.peakSeasonStart);
+  normalizedPricing.peakSeasonEnd=normalizeDate(pricing.peakSeasonEnd);
+  normalizedPricing.offPeakStart=normalizeDate(pricing.offPeakStart);
+  normalizedPricing.offPeakEnd=normalizeDate(pricing.offPeakEnd);
+  normalizedPricing.events=eventInputs
+    .filter((event)=>event && event.name && event.startDate && event.endDate)
+    .map((event)=>({
+      name:event.name,
+      startDate:event.startDate,
+      endDate:event.endDate,
+      multiplier:normalizeNumber(event.multiplier,1.2),
+    }));
+
+  return normalizedPricing;
+};
 
 
 module.exports.index=async (req,res)=>{
@@ -26,9 +97,11 @@ module.exports.showListing=async (req,res)=>{
 };
 
 module.exports.createListing=async(req,res)=>{
-    let url=req.file.path;
-    let filename=req.file.filename;
-    const newListing=new Listing(req.body.listing);
+    if(!req.file){
+      throw new ExpressError(400,"Listing image is required");
+    }
+    let {url,filename}=getImageData(req.file);
+    const newListing=new Listing(normalizeListing(req.body.listing));
     newListing.owner=req.user._id;
     newListing.image={url,filename};
     await newListing.save();
@@ -51,10 +124,13 @@ module.exports.renderEditForm=async (req, res) => {
 
 module.exports.updateListing=async (req, res) => {
   let { id } = req.params;
- let listing= await Listing.findByIdAndUpdate(id, { ...req.body.listing });
+ const listingData=normalizeListing(req.body.listing);
+ let listing= await Listing.findByIdAndUpdate(id, { ...listingData }, {new:true, runValidators:true});
+ if(!listing){
+  throw new ExpressError(404,"Listing not found");
+ }
  if(typeof req.file!=="undefined"){
-  let url=req.file.path;
-  let filename=req.file.filename;
+  let {url,filename}=getImageData(req.file);
   listing.image={url,filename};
   await listing.save();
  }

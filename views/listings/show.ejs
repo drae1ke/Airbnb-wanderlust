@@ -1,84 +1,297 @@
-  <% layout('layouts/boilerplate') %>
- <div class="row mt-3">
-    <div class="col-8 offset-3">
-    <h3><%=listing.title%></h3>
-     </div>
-<div class="card col-6 offset-3 show-card">
-     <img src="<%=listing.image.url%>" class="card-img-top show-img" alt="listing_image">
-  <div class="card-body">
-    <p class="card-text">Owned by<i><%=listing.owner.username%></i></p>
-       <p class="card-text"> <%=listing.description%></p>
-        <p class="card-text">&#8377; <%=listing.price.toLocaleString("en-IN")%></p>
-        <p class="card-text"></p><%=listing.location%></p>
-        <p class="card-text"></p><%=listing.country%></p>
+<% layout('layouts/boilerplate') %>
+
+<% const isOwner = currUser && listing.owner && listing.owner._id.equals(currUser._id); %>
+<% const pricing = listing.pricing || {}; %>
+<% const cleaningFee = pricing.cleaningFee || 0; %>
+<% const serviceFeePercent = pricing.serviceFeePercent || 0; %>
+<% const minStay = pricing.minStay || 1; %>
+<% const maxGuests = listing.maxGuests || 2; %>
+<% const dateValue = (value) => value ? new Date(value).toISOString().slice(0, 10) : ""; %>
+<% const smartPricingConfig = {
+  enabled: pricing.smartPricingEnabled !== false,
+  weekendMultiplier: pricing.weekendMultiplier || 1.15,
+  peakSeasonStart: dateValue(pricing.peakSeasonStart),
+  peakSeasonEnd: dateValue(pricing.peakSeasonEnd),
+  peakSeasonMultiplier: pricing.peakSeasonMultiplier || 1.25,
+  offPeakStart: dateValue(pricing.offPeakStart),
+  offPeakEnd: dateValue(pricing.offPeakEnd),
+  offPeakMultiplier: pricing.offPeakMultiplier || 0.9,
+  events: (pricing.events || []).map((event) => ({
+    name: event.name,
+    startDate: dateValue(event.startDate),
+    endDate: dateValue(event.endDate),
+    multiplier: event.multiplier || 1.2,
+  })),
+}; %>
+
+<div class="listing-show mt-3">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <h3><%= listing.title %></h3>
+      <p class="text-muted mb-3"><%= listing.roomType || "Private room" %> in <%= listing.location %>, <%= listing.county || listing.country %></p>
+
+      <img src="<%= listing.image.url %>" class="show-img rounded-3 w-100" alt="<%= listing.title %>">
+
+      <div class="mt-4">
+        <p class="mb-1">Hosted by <i><%= listing.owner ? listing.owner.username : "Host" %></i></p>
+        <p><%= listing.description %></p>
+        <p class="fw-semibold">KES <%= listing.price.toLocaleString("en-KE") %> / night</p>
+        <p><%= maxGuests %> guest<%= maxGuests === 1 ? "" : "s" %> - <%= listing.location %>, <%= listing.county || "Kenya" %></p>
+
+        <% if(listing.amenities && listing.amenities.length){ %>
+          <div class="amenity-list">
+            <% listing.amenities.forEach((amenity) => { %>
+              <span><%= amenity %></span>
+            <% }) %>
+          </div>
+        <% } %>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="booking-panel">
+        <% if(isOwner){ %>
+          <h5>Host Pricing</h5>
+          <p class="price-line">KES <%= listing.price.toLocaleString("en-KE") %> / night</p>
+          <div class="metric-row"><span>Cleaning fee</span><b>KES <%= cleaningFee.toLocaleString("en-KE") %></b></div>
+          <div class="metric-row"><span>Service fee</span><b><%= serviceFeePercent %>%</b></div>
+          <div class="metric-row"><span>Minimum stay</span><b><%= minStay %> night<%= minStay === 1 ? "" : "s" %></b></div>
+          <div class="metric-row"><span>Occupancy target</span><b><%= pricing.occupancyTarget || 70 %>%</b></div>
+          <div class="metric-row"><span>Smart pricing</span><b><%= smartPricingConfig.enabled ? "On" : "Off" %></b></div>
+          <div class="metric-row"><span>Weekend</span><b>x<%= smartPricingConfig.weekendMultiplier %></b></div>
+          <div class="metric-row"><span>Peak season</span><b>x<%= smartPricingConfig.peakSeasonMultiplier %></b></div>
+          <div class="metric-row"><span>Off-peak</span><b>x<%= smartPricingConfig.offPeakMultiplier %></b></div>
+          <% if(smartPricingConfig.events.length){ %>
+            <div class="pricing-events">
+              <% smartPricingConfig.events.forEach((event) => { %>
+                <% if(event.name && event.startDate && event.endDate){ %>
+                  <div><b><%= event.name %></b> x<%= event.multiplier %></div>
+                <% } %>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <div class="btns mt-3">
+            <a href="/listings/<%= listing._id %>/edit" class="btn btn-dark edit-btn">Edit pricing</a>
+            <form method="post" action="/listings/<%= listing._id %>?_method=DELETE">
+              <button class="btn btn-outline-danger">Delete</button>
+            </form>
+          </div>
+        <% } else { %>
+          <h5>Book This Room</h5>
+          <p class="price-line">KES <%= listing.price.toLocaleString("en-KE") %> / night</p>
+
+          <% if(currUser){ %>
+            <form action="/listings/<%= listing._id %>/bookings" method="POST" class="needs-validation booking-form" novalidate
+              data-price="<%= listing.price %>"
+              data-cleaning="<%= cleaningFee %>"
+              data-service="<%= serviceFeePercent %>"
+              data-min-stay="<%= minStay %>">
+              <div class="mb-3">
+                <label for="checkIn" class="form-label">Check-in</label>
+                <input id="checkIn" name="booking[checkIn]" type="date" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="checkOut" class="form-label">Check-out</label>
+                <input id="checkOut" name="booking[checkOut]" type="date" class="form-control" required>
+              </div>
+              <div class="mb-3">
+                <label for="guests" class="form-label">Guests</label>
+                <input id="guests" name="booking[guests]" value="1" type="number" min="1" max="<%= maxGuests %>" class="form-control" required>
+              </div>
+
+              <div class="booking-total">
+                <div class="metric-row"><span>Nights</span><b id="bookingNights">-</b></div>
+                <div class="metric-row"><span>Stay subtotal</span><b id="bookingSubtotal">KES 0</b></div>
+                <div class="metric-row"><span>Avg nightly</span><b id="bookingAverage">KES 0</b></div>
+                <div class="metric-row"><span>Cleaning</span><b>KES <%= cleaningFee.toLocaleString("en-KE") %></b></div>
+                <div class="metric-row"><span>Service</span><b id="bookingService">KES 0</b></div>
+                <div class="metric-row total"><span>Total</span><b id="bookingTotal">KES 0</b></div>
+              </div>
+              <p id="bookingRules" class="booking-rules text-muted"></p>
+
+              <button class="btn btn-dark add-btn w-100 mt-3">Reserve</button>
+            </form>
+          <% } else { %>
+            <a href="/login" class="btn btn-dark add-btn w-100">Log in to reserve</a>
+          <% } %>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="row mt-4">
+    <div class="col-lg-8">
+      <% if(currUser){ %>
+        <hr>
+        <h4>Leave a Review</h4>
+        <form action="/listings/<%= listing.id %>/reviews" method="POST" novalidate class="needs-validation">
+          <div class="mb-3 mt-3">
+            <label for="rating" class="form-label">Rating</label>
+            <fieldset class="starability-slot">
+              <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating.">
+              <input type="radio" id="first-rate1" name="review[rating]" value="1">
+              <label for="first-rate1" title="Terrible">1 star</label>
+              <input type="radio" id="first-rate2" name="review[rating]" value="2">
+              <label for="first-rate2" title="Not good">2 stars</label>
+              <input type="radio" id="first-rate3" name="review[rating]" value="3">
+              <label for="first-rate3" title="Average">3 stars</label>
+              <input type="radio" id="first-rate4" name="review[rating]" value="4">
+              <label for="first-rate4" title="Very good">4 stars</label>
+              <input type="radio" id="first-rate5" name="review[rating]" value="5">
+              <label for="first-rate5" title="Amazing">5 stars</label>
+            </fieldset>
+          </div>
+          <div class="mb-3 mt-3">
+            <label for="comment" class="form-label">Comments</label>
+            <textarea name="review[comment]" id="comment" cols="30" rows="6" class="form-control" required></textarea>
+            <div class="invalid-feedback">Please add some comments for review</div>
+          </div>
+          <button class="btn btn-outline-dark">Submit</button>
+        </form>
+        <hr>
+      <% } %>
+
+      <% if(listing.reviews && listing.reviews.length > 0){ %>
+        <div class="row">
+          <p><b>All Reviews</b></p>
+          <% for(review of listing.reviews){ %>
+            <div class="card review-card col-md-5 ms-3 mb-3">
+              <div class="card-body">
+                <h5 class="card-title">@<%= review.author ? review.author.username : "guest" %></h5>
+                <p class="starability-result card-text" data-rating="<%= review.rating %>"></p>
+                <p class="card-text"><%= review.comment %></p>
+                <form class="mb-1" method="POST" action="/listings/<%= listing._id %>/reviews/<%= review._id %>?_method=DELETE">
+                  <button class="btn btn-sm btn-dark">Delete</button>
+                </form>
+              </div>
+            </div>
+          <% } %>
+        </div>
+      <% } %>
+    </div>
   </div>
 </div>
-    <%if(currUser && listing.owner._id.equals(currUser._id)){%>
-    <div class="btns">
-    <a href="/listings/<%=listing._id%>/edit" class="btn btn-dark col-1 offset-3 edit-btn">Edit</a>
-    <form method ="post" action="/listings/<%=listing._id%>?_method=DELETE">
-        <button class="btn btn-dark offset-4">Delete</button>
-    </form>
-   </div>
-   <%}%>
-   
-    <div class="col-8 offset-3 mb-3">
-      
-      <% if(currUser){%>
-         <hr>
-      <h4>Leave a Review</h4>
-      <form action="/listings/<%=listing.id%>/reviews" method="POST" novalidate class="needs-validation">
-         
-          <div class="mb-3 mt-3">
-             <label for="rating"  class="form-label">Rating</label>
-         <fieldset class="starability-slot">
-  <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="1" checked aria-label="No rating." />
-  <input type="radio" id="first-rate1" name="review[rating]" value="1" />
-  <label for="first-rate1" title="Terrible">1 star</label>
-  <input type="radio" id="first-rate2" name="review[rating]" value="2" />
-  <label for="first-rate2" title="Not good">2 stars</label>
-  <input type="radio" id="first-rate3" name="review[rating]" value="3" />
-  <label for="first-rate3" title="Average">3 stars</label>
-  <input type="radio" id="first-rate4" name="review[rating]" value="4" />
-  <label for="first-rate4" title="Very good">4 stars</label>
-  <input type="radio" id="first-rate5" name="review[rating]" value="5" />
-  <label for="first-rate5" title="Amazing">5 stars</label>
-</fieldset>
-</div>
-         <div  class="mb-3 mt-3">
-          <label for="comment"  class="form-label">Comments</label>
-          <textarea name="review[comment]" id="comment" cols="30" rows="6" class="form-control" required></textarea>
-          <div class="invalid-feedback">
-            Please add some comments for review
-          </div>
-         </div>
-         <button class="btn btn-outline-dark">Submit</button>
-      </form>
-      <hr/>
-       <%}%>
-       
-     
-       <%if(listing.reviews.length > 0){%>
-      <div class="row">
-    <p><b>All Reviews</b></p>
-      <%for(review of listing.reviews){%>
-      <div class="card review-card col-5 ms-3 mb-3" >
-         <div class="card-body">
-           <h5 class="card-title">@<%=review.author.username%></h5>
-            <p class="starability-result card-text" data-rating="<%=review.rating%>">
-             </p>
-           <p class="card-text"><%=review.comment%></p>
-             
-          
-         <form class="mb-1" method="POST" action="/listings/<%=listing._id%>/reviews/<%=review._id%>?_method=DELETE">
-          <button class="btn btn-sm btn-dark">Delete</button>
-         </form>
-      </div>
-      </div>
-      <%}%>
-</div>
-  <%}%>
-</div>
- </div>
-  
- 
+
+<script>
+  const smartPricingConfig = <%- JSON.stringify(smartPricingConfig) %>;
+  const bookingForm = document.querySelector(".booking-form");
+  if (bookingForm) {
+    const checkIn = document.getElementById("checkIn");
+    const checkOut = document.getElementById("checkOut");
+    const nightsEl = document.getElementById("bookingNights");
+    const subtotalEl = document.getElementById("bookingSubtotal");
+    const averageEl = document.getElementById("bookingAverage");
+    const serviceEl = document.getElementById("bookingService");
+    const totalEl = document.getElementById("bookingTotal");
+    const rulesEl = document.getElementById("bookingRules");
+    const formatter = new Intl.NumberFormat("en-KE");
+    const today = new Date().toISOString().split("T")[0];
+
+    checkIn.min = today;
+    checkOut.min = today;
+
+    const pad = (value) => String(value).padStart(2, "0");
+    const dateKey = (date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    const inRange = (key, start, end) => start && end && key >= start && key <= end;
+
+    const addDays = (date, days) => {
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + days);
+      return nextDate;
+    };
+
+    const getNightRate = (date, basePrice) => {
+      const key = dateKey(date);
+      const day = date.getDay();
+      let multiplier = 1;
+      let label = "Base rate";
+
+      if (!smartPricingConfig.enabled) {
+        return { rate: basePrice, label };
+      }
+
+      if (inRange(key, smartPricingConfig.offPeakStart, smartPricingConfig.offPeakEnd)) {
+        multiplier = Number(smartPricingConfig.offPeakMultiplier) || 0.9;
+        label = "Off-peak";
+      }
+
+      if (inRange(key, smartPricingConfig.peakSeasonStart, smartPricingConfig.peakSeasonEnd)) {
+        const peakMultiplier = Number(smartPricingConfig.peakSeasonMultiplier) || 1.25;
+        if (peakMultiplier > multiplier) {
+          multiplier = peakMultiplier;
+          label = "Peak season";
+        }
+      }
+
+      if ([5, 6, 0].includes(day)) {
+        const weekendMultiplier = Number(smartPricingConfig.weekendMultiplier) || 1.15;
+        if (weekendMultiplier > multiplier) {
+          multiplier = weekendMultiplier;
+          label = "Weekend";
+        }
+      }
+
+      for (const event of smartPricingConfig.events || []) {
+        if (inRange(key, event.startDate, event.endDate)) {
+          const eventMultiplier = Number(event.multiplier) || 1.2;
+          if (eventMultiplier > multiplier) {
+            multiplier = eventMultiplier;
+            label = event.name || "Major event";
+          }
+        }
+      }
+
+      return {
+        rate: Math.round(basePrice * multiplier),
+        label,
+      };
+    };
+
+    const updateBookingTotal = () => {
+      const price = Number(bookingForm.dataset.price);
+      const cleaning = Number(bookingForm.dataset.cleaning);
+      const servicePercent = Number(bookingForm.dataset.service);
+      const minStay = Number(bookingForm.dataset.minStay);
+      const start = new Date(checkIn.value);
+      const end = new Date(checkOut.value);
+      const nights = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+
+      if (!checkIn.value || !checkOut.value || nights < 1) {
+        nightsEl.textContent = "-";
+        subtotalEl.textContent = "KES 0";
+        averageEl.textContent = "KES 0";
+        serviceEl.textContent = "KES 0";
+        totalEl.textContent = "KES 0";
+        rulesEl.textContent = "";
+        return;
+      }
+
+      if (checkIn.value) {
+        checkOut.min = checkIn.value;
+      }
+
+      let staySubtotal = 0;
+      const appliedRules = new Set();
+      for (let i = 0; i < nights; i += 1) {
+        const rateInfo = getNightRate(addDays(start, i), price);
+        staySubtotal += rateInfo.rate;
+        if (rateInfo.label !== "Base rate") {
+          appliedRules.add(rateInfo.label);
+        }
+      }
+
+      const serviceFee = Math.round((staySubtotal * servicePercent) / 100);
+      const total = staySubtotal + cleaning + serviceFee;
+      nightsEl.textContent = `${nights}${nights < minStay ? ` (min ${minStay})` : ""}`;
+      subtotalEl.textContent = `KES ${formatter.format(staySubtotal)}`;
+      averageEl.textContent = `KES ${formatter.format(Math.round(staySubtotal / nights))}`;
+      serviceEl.textContent = `KES ${formatter.format(serviceFee)}`;
+      totalEl.textContent = `KES ${formatter.format(total)}`;
+      rulesEl.textContent = appliedRules.size ? `Applied: ${Array.from(appliedRules).join(", ")}` : "";
+    };
+
+    checkIn.addEventListener("change", updateBookingTotal);
+    checkOut.addEventListener("change", updateBookingTotal);
+  }
+</script>

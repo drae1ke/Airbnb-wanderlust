@@ -1,0 +1,19 @@
+<% if (currUser && currUser.isAdmin) { %>
+  <% const path = currentPath || ""; %>
+  <% const isActive = (href, exact = false) => exact ? path === href : path === href || path.startsWith(`${href}/`); %>
+  <div class="admin-topbar">
+    <div class="container-fluid">
+      <div class="admin-topbar-copy">
+        <span class="admin-pill">Admin</span>
+        <span>Manage listings, bookings, and platform users.</span>
+      </div>
+      <div class="admin-topbar-links">
+        <a class="admin-topbar-link <%= isActive('/admin', true) ? 'active' : '' %>" href="/admin">Dashboard</a>
+        <a class="admin-topbar-link <%= isActive('/admin/properties') ? 'active' : '' %>" href="/admin/properties">Properties</a>
+        <a class="admin-topbar-link <%= isActive('/admin/bookings') ? 'active' : '' %>" href="/admin/bookings">Bookings</a>
+        <a class="admin-topbar-link <%= isActive('/admin/users') ? 'active' : '' %>" href="/admin/users">Users</a>
+        <a class="admin-topbar-link <%= isActive('/listings/new', true) ? 'active' : '' %>" href="/listings/new">Add Property</a>
+      </div>
+    </div>
+  </div>
+<% } %>

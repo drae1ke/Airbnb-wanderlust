@@ -1,0 +1,44 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="admin-kicker">Admin Workspace</p>
+      <h1 class="h3 mb-2">Users</h1>
+      <p class="admin-subtitle">See who has access to the platform and quickly distinguish admins from standard users.</p>
+    </div>
+  </div>
+
+  <div class="card admin-table-card">
+    <div class="card-body">
+      <% if (users.length) { %>
+        <div class="table-responsive">
+          <table class="table admin-table align-middle">
+            <thead>
+              <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% users.forEach((user) => { %>
+                <tr>
+                  <td class="fw-semibold"><%= user.username %></td>
+                  <td><%= user.email %></td>
+                  <td>
+                    <span class="admin-role-badge <%= user.isAdmin ? 'admin' : 'user' %>">
+                      <%= user.isAdmin ? "Admin" : "User" %>
+                    </span>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="admin-empty">No users found.</div>
+      <% } %>
+    </div>
+  </div>
+</div>

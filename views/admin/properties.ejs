@@ -1,0 +1,66 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="admin-kicker">Admin Workspace</p>
+      <h1 class="h3 mb-2">Properties</h1>
+      <p class="admin-subtitle">Review every property on the platform and jump into the live listing experience when needed.</p>
+    </div>
+    <div class="admin-quick-links">
+      <a href="/listings/new" class="btn add-btn text-white">Add property</a>
+      <a href="/listings" class="btn btn-outline-dark">Public browse view</a>
+    </div>
+  </div>
+
+  <div class="card admin-table-card">
+    <div class="card-body">
+      <% if (listings.length) { %>
+        <div class="table-responsive">
+          <table class="table admin-table align-middle">
+            <thead>
+              <tr>
+                <th>Property</th>
+                <th>Host</th>
+                <th>Location</th>
+                <th>Rate</th>
+                <th>Guests</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% listings.forEach((listing) => { %>
+                <% const canEdit = currUser && listing.owner && String(listing.owner._id) === String(currUser._id); %>
+                <tr>
+                  <td>
+                    <div class="d-flex align-items-center gap-3">
+                      <img src="<%= listing.image?.url || listing.image %>" alt="<%= listing.title %>" class="admin-thumb">
+                      <div>
+                        <div class="fw-semibold"><%= listing.title %></div>
+                        <div class="text-muted small"><%= listing.roomType || "Private room" %></div>
+                      </div>
+                    </div>
+                  </td>
+                  <td><%= listing.owner ? listing.owner.username : "Unassigned" %></td>
+                  <td><%= listing.location %>, <%= listing.county || listing.country %></td>
+                  <td>KES <%= Number(listing.price || 0).toLocaleString("en-KE") %></td>
+                  <td><%= listing.maxGuests || 0 %></td>
+                  <td>
+                    <div class="d-flex gap-2 flex-wrap">
+                      <a href="/listings/<%= listing._id %>" class="btn btn-sm btn-outline-dark">View</a>
+                      <% if (canEdit) { %>
+                        <a href="/listings/<%= listing._id %>/edit" class="btn btn-sm add-btn text-white">Edit</a>
+                      <% } %>
+                    </div>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="admin-empty">No properties are available yet.</div>
+      <% } %>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,128 @@
+<% layout("layouts/boilerplate") %>
+
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="admin-kicker">Admin Workspace</p>
+      <h1 class="h3 mb-2">Platform overview</h1>
+      <p class="admin-subtitle">A quick snapshot of inventory, reservations, and account activity across Wanderlust.</p>
+    </div>
+    <div class="admin-quick-links">
+      <a href="/listings/new" class="btn add-btn text-white">Add property</a>
+      <a href="/admin/bookings" class="btn btn-outline-dark">Review bookings</a>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card admin-stat-card h-100">
+        <div class="card-body">
+          <p class="admin-stat-label">Properties</p>
+          <p class="admin-stat-value"><%= stats.propertyCount.toLocaleString("en-KE") %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card admin-stat-card h-100">
+        <div class="card-body">
+          <p class="admin-stat-label">Bookings</p>
+          <p class="admin-stat-value"><%= stats.bookingCount.toLocaleString("en-KE") %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card admin-stat-card h-100">
+        <div class="card-body">
+          <p class="admin-stat-label">Users</p>
+          <p class="admin-stat-value"><%= stats.userCount.toLocaleString("en-KE") %></p>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card admin-stat-card h-100">
+        <div class="card-body">
+          <p class="admin-stat-label">Admins</p>
+          <p class="admin-stat-value"><%= stats.adminCount.toLocaleString("en-KE") %></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-lg-6">
+      <div class="card admin-table-card h-100">
+        <div class="card-body">
+          <h2 class="admin-section-title">Latest properties</h2>
+          <% if (recentProperties.length) { %>
+            <div class="table-responsive">
+              <table class="table admin-table align-middle">
+                <thead>
+                  <tr>
+                    <th>Property</th>
+                    <th>Host</th>
+                    <th>Nightly Rate</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% recentProperties.forEach((listing) => { %>
+                    <tr>
+                      <td>
+                        <a href="/listings/<%= listing._id %>" class="fw-semibold text-decoration-none text-dark"><%= listing.title %></a>
+                        <div class="text-muted small"><%= listing.location %>, <%= listing.county || listing.country %></div>
+                      </td>
+                      <td><%= listing.owner ? listing.owner.username : "Unassigned" %></td>
+                      <td>KES <%= Number(listing.price || 0).toLocaleString("en-KE") %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="admin-empty">No properties have been added yet.</div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card admin-table-card h-100">
+        <div class="card-body">
+          <h2 class="admin-section-title">Recent bookings</h2>
+          <% if (recentBookings.length) { %>
+            <div class="table-responsive">
+              <table class="table admin-table align-middle">
+                <thead>
+                  <tr>
+                    <th>Guest</th>
+                    <th>Property</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <% recentBookings.forEach((booking) => { %>
+                    <tr>
+                      <td>
+                        <span class="fw-semibold"><%= booking.guest ? booking.guest.username : "Guest" %></span>
+                        <div class="text-muted small"><%= booking.host ? `Host: ${booking.host.username}` : "Host unavailable" %></div>
+                      </td>
+                      <td>
+                        <% if (booking.listing) { %>
+                          <a href="/listings/<%= booking.listing._id %>" class="text-decoration-none text-dark"><%= booking.listing.title %></a>
+                        <% } else { %>
+                          <span class="text-muted">Removed listing</span>
+                        <% } %>
+                      </td>
+                      <td>KES <%= Number(booking.totalPrice || 0).toLocaleString("en-KE") %></td>
+                    </tr>
+                  <% }) %>
+                </tbody>
+              </table>
+            </div>
+          <% } else { %>
+            <div class="admin-empty">No bookings have been recorded yet.</div>
+          <% } %>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

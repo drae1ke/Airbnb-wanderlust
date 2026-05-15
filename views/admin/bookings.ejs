@@ -1,0 +1,61 @@
+<% layout("layouts/boilerplate") %>
+
+<% const formatDate = (value) => new Date(value).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" }); %>
+
+<div class="admin-page">
+  <div class="admin-header">
+    <div>
+      <p class="admin-kicker">Admin Workspace</p>
+      <h1 class="h3 mb-2">Bookings</h1>
+      <p class="admin-subtitle">Track reservations across all listings, hosts, and guests from one central view.</p>
+    </div>
+  </div>
+
+  <div class="card admin-table-card">
+    <div class="card-body">
+      <% if (bookings.length) { %>
+        <div class="table-responsive">
+          <table class="table admin-table align-middle">
+            <thead>
+              <tr>
+                <th>Guest</th>
+                <th>Property</th>
+                <th>Stay</th>
+                <th>Host</th>
+                <th>Total</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% bookings.forEach((booking) => { %>
+                <tr>
+                  <td>
+                    <div class="fw-semibold"><%= booking.guest ? booking.guest.username : "Guest" %></div>
+                    <div class="text-muted small"><%= booking.guests %> guest<%= booking.guests === 1 ? "" : "s" %></div>
+                  </td>
+                  <td>
+                    <% if (booking.listing) { %>
+                      <a href="/listings/<%= booking.listing._id %>" class="text-decoration-none text-dark fw-semibold"><%= booking.listing.title %></a>
+                      <div class="text-muted small"><%= booking.listing.location %>, <%= booking.listing.county || booking.listing.country %></div>
+                    <% } else { %>
+                      <span class="text-muted">Removed listing</span>
+                    <% } %>
+                  </td>
+                  <td>
+                    <div><%= formatDate(booking.checkIn) %> - <%= formatDate(booking.checkOut) %></div>
+                    <div class="text-muted small"><%= booking.nights %> night<%= booking.nights === 1 ? "" : "s" %></div>
+                  </td>
+                  <td><%= booking.host ? booking.host.username : "Host unavailable" %></td>
+                  <td>KES <%= Number(booking.totalPrice || 0).toLocaleString("en-KE") %></td>
+                  <td><span class="admin-status <%= booking.status %>"><%= booking.status %></span></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      <% } else { %>
+        <div class="admin-empty">No bookings have been made yet.</div>
+      <% } %>
+    </div>
+  </div>
+</div>

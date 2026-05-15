@@ -1,63 +1,165 @@
- <% layout('layouts/boilerplate') %>
+<% layout('layouts/boilerplate') %>
+
+<% const amenities = listing.amenities || []; %>
+<% const pricing = listing.pricing || {}; %>
+<% const dateValue = (value) => value ? new Date(value).toISOString().slice(0, 10) : ""; %>
+<% const eventRows = [...(pricing.events || [])]; while (eventRows.length < 3) { eventRows.push({}); } %>
 
 <div class="row mt-3">
-<div class="col-8 offset-2">
-
-    <h3>Edit your Listing</h3>
+  <div class="col-10 offset-1 col-lg-8 offset-lg-2">
+    <h3>Manage Room Pricing</h3>
     <form method="POST" action="/listings/<%= listing._id %>?_method=PUT" novalidate class="needs-validation" enctype="multipart/form-data">
-        <div class="mb-3">
-           <lable for="title" class="form-label">Title</lable>
-          <input name="listing[title]" value="<%=listing.title%>" type="text" class="form-control" required />
+      <div class="row">
+        <div class="mb-3 col-md-8">
+          <label for="title" class="form-label">Room title</label>
+          <input id="title" name="listing[title]" value="<%= listing.title %>" type="text" class="form-control" required>
           <div class="valid-feedback">Title looks good!</div>
         </div>
 
-       <div class="mb-3">
-          <lable for="description" class="form-label">Description</lable>
-           <textarea name="listing[description]" class="form-control" required><%=listing.description%></textarea>
-           <div class="invalid-feedback">please enter a short description</div>
-       </div>
+        <div class="mb-3 col-md-4">
+          <label for="roomType" class="form-label">Room type</label>
+          <select id="roomType" name="listing[roomType]" class="form-select" required>
+            <% ["Private room", "Studio", "Suite", "Guest suite", "Apartment"].forEach((type) => { %>
+              <option value="<%= type %>" <%= listing.roomType === type ? "selected" : "" %>><%= type %></option>
+            <% }) %>
+          </select>
+        </div>
+      </div>
 
-     
- 
-       <div class="mb-3">
-          <lable for="image" class="form-label">Upload New Image</lable>
-          <input name="listing[image]"  type="file" class="form-control" />
-       </div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea id="description" name="listing[description]" class="form-control" rows="4" required><%= listing.description %></textarea>
+        <div class="invalid-feedback">Please enter a short description</div>
+      </div>
+
+      <div class="mb-3">
+        <label for="image" class="form-label">Upload new room image</label>
+        <input id="image" name="listing[image]" type="file" class="form-control">
+      </div>
 
       <div class="row">
         <div class="mb-3 col-md-4">
-          <lable for="price" class="form-label">Price</lable>
-          <input name="listing[price]" value="<%=listing.price%>" type="number" class="form-control" required />
- <div class="invalid-feedback">Price should be valid</div>
-       </div>
-     <div class="mb-3 col-md-8">
-       <lable for="country" class="form-label">Country</lable>
-      <input
-        name="listing[country]"
-        value="<%=listing.country%>"
-        type="text"
-        class="form-control" 
-        required
-      />
- <div class="invalid-feedback">Country name should be valid</div>
-      </div>
-      </div>
-       <div class="mb-3">
-       <lable for="location" class="form-label">Location</lable>
-      <input
-        name="listing[location]"
-        value="<%=listing.location%>"
-        type="text"
-        class="form-control" 
-        required
-      />
-          <div class="invalid-feedback">Location should be valid</div>
-      </div>
-      
-      <button class="btn btn-dark edit-btn mt-3">Edit</button>
-    </form>
-  
- </div>
+          <label for="price" class="form-label">Nightly rate (KES)</label>
+          <input id="price" name="listing[price]" value="<%= listing.price %>" type="number" min="0" class="form-control" required>
+          <div class="invalid-feedback">Nightly rate should be valid</div>
+        </div>
 
+        <div class="mb-3 col-md-4">
+          <label for="cleaningFee" class="form-label">Cleaning fee (KES)</label>
+          <input id="cleaningFee" name="listing[pricing][cleaningFee]" value="<%= pricing.cleaningFee || 0 %>" type="number" min="0" class="form-control" required>
+        </div>
+
+        <div class="mb-3 col-md-4">
+          <label for="serviceFeePercent" class="form-label">Service fee (%)</label>
+          <input id="serviceFeePercent" name="listing[pricing][serviceFeePercent]" value="<%= pricing.serviceFeePercent || 8 %>" type="number" min="0" max="30" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="mb-3 col-md-4">
+          <label for="minStay" class="form-label">Minimum stay</label>
+          <input id="minStay" name="listing[pricing][minStay]" value="<%= pricing.minStay || 1 %>" type="number" min="1" max="30" class="form-control" required>
+        </div>
+
+        <div class="mb-3 col-md-4">
+          <label for="occupancyTarget" class="form-label">Occupancy target (%)</label>
+          <input id="occupancyTarget" name="listing[pricing][occupancyTarget]" value="<%= pricing.occupancyTarget || 75 %>" type="number" min="0" max="100" class="form-control" required>
+        </div>
+
+        <div class="mb-3 col-md-4">
+          <label for="maxGuests" class="form-label">Max guests</label>
+          <input id="maxGuests" name="listing[maxGuests]" value="<%= listing.maxGuests || 2 %>" type="number" min="1" max="20" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="smart-pricing-section mb-3">
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" role="switch" id="smartPricingEnabled" name="listing[pricing][smartPricingEnabled]" value="true" <%= pricing.smartPricingEnabled !== false ? "checked" : "" %>>
+          <label class="form-check-label" for="smartPricingEnabled">Enable smart pricing</label>
+        </div>
+
+        <div class="row">
+          <div class="mb-3 col-md-4">
+            <label for="weekendMultiplier" class="form-label">Weekend multiplier</label>
+            <input id="weekendMultiplier" name="listing[pricing][weekendMultiplier]" value="<%= pricing.weekendMultiplier || 1.15 %>" type="number" min="0.5" max="5" step="0.05" class="form-control">
+          </div>
+          <div class="mb-3 col-md-4">
+            <label for="peakSeasonMultiplier" class="form-label">Peak multiplier</label>
+            <input id="peakSeasonMultiplier" name="listing[pricing][peakSeasonMultiplier]" value="<%= pricing.peakSeasonMultiplier || 1.25 %>" type="number" min="0.5" max="5" step="0.05" class="form-control">
+          </div>
+          <div class="mb-3 col-md-4">
+            <label for="offPeakMultiplier" class="form-label">Off-peak multiplier</label>
+            <input id="offPeakMultiplier" name="listing[pricing][offPeakMultiplier]" value="<%= pricing.offPeakMultiplier || 0.9 %>" type="number" min="0.5" max="5" step="0.05" class="form-control">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="mb-3 col-md-3">
+            <label for="peakSeasonStart" class="form-label">Peak starts</label>
+            <input id="peakSeasonStart" name="listing[pricing][peakSeasonStart]" value="<%= dateValue(pricing.peakSeasonStart) %>" type="date" class="form-control">
+          </div>
+          <div class="mb-3 col-md-3">
+            <label for="peakSeasonEnd" class="form-label">Peak ends</label>
+            <input id="peakSeasonEnd" name="listing[pricing][peakSeasonEnd]" value="<%= dateValue(pricing.peakSeasonEnd) %>" type="date" class="form-control">
+          </div>
+          <div class="mb-3 col-md-3">
+            <label for="offPeakStart" class="form-label">Off-peak starts</label>
+            <input id="offPeakStart" name="listing[pricing][offPeakStart]" value="<%= dateValue(pricing.offPeakStart) %>" type="date" class="form-control">
+          </div>
+          <div class="mb-3 col-md-3">
+            <label for="offPeakEnd" class="form-label">Off-peak ends</label>
+            <input id="offPeakEnd" name="listing[pricing][offPeakEnd]" value="<%= dateValue(pricing.offPeakEnd) %>" type="date" class="form-control">
+          </div>
+        </div>
+
+        <label class="form-label">Major event pricing</label>
+        <% eventRows.slice(0, 5).forEach((event, index) => { %>
+          <div class="row event-row">
+            <div class="mb-2 col-md-4">
+              <input name="listing[pricing][events][<%= index %>][name]" value="<%= event.name || "" %>" placeholder="Event name" type="text" class="form-control">
+            </div>
+            <div class="mb-2 col-md-3">
+              <input name="listing[pricing][events][<%= index %>][startDate]" value="<%= dateValue(event.startDate) %>" type="date" class="form-control">
+            </div>
+            <div class="mb-2 col-md-3">
+              <input name="listing[pricing][events][<%= index %>][endDate]" value="<%= dateValue(event.endDate) %>" type="date" class="form-control">
+            </div>
+            <div class="mb-2 col-md-2">
+              <input name="listing[pricing][events][<%= index %>][multiplier]" value="<%= event.multiplier || "" %>" placeholder="1.30" type="number" min="0.5" max="5" step="0.05" class="form-control">
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <div class="row">
+        <div class="mb-3 col-md-6">
+          <label for="county" class="form-label">County</label>
+          <input id="county" name="listing[county]" value="<%= listing.county || "" %>" type="text" class="form-control" required>
+          <div class="invalid-feedback">County is required</div>
+        </div>
+
+        <div class="mb-3 col-md-6">
+          <label for="location" class="form-label">Area or estate</label>
+          <input id="location" name="listing[location]" value="<%= listing.location %>" type="text" class="form-control" required>
+          <div class="invalid-feedback">Location is required</div>
+        </div>
+      </div>
+
+      <input name="listing[country]" value="Kenya" type="hidden">
+
+      <div class="mb-3">
+        <label class="form-label">Amenities</label>
+        <div class="amenity-grid">
+          <% ["Wi-Fi", "Workspace", "Breakfast", "Secure parking", "Air conditioning", "Kitchenette", "Pool", "Backup power"].forEach((amenity) => { %>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="listing[amenities]" value="<%= amenity %>" id="amenity-<%= amenity.replace(/\s+/g, '-').toLowerCase() %>" <%= amenities.includes(amenity) ? "checked" : "" %>>
+              <label class="form-check-label" for="amenity-<%= amenity.replace(/\s+/g, '-').toLowerCase() %>"><%= amenity %></label>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <button class="btn btn-dark edit-btn mt-3">Save pricing</button>
+    </form>
+  </div>
 </div>
- 

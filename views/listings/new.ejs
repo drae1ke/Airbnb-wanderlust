@@ -1,52 +1,162 @@
- <% layout('layouts/boilerplate') %>
+<% layout('layouts/boilerplate') %>
 
-<div class="row mt-3"> 
-  <div class="col-8 offset-2">
-    
-    <h3>Create a New Listing</h3>
-    <form method ="POST" action="/listings" novalidate class="needs-validation" enctype="multipart/form-data">
-      <div class="mb-3">
-         <lable for="title" class="form-label">Title</lable>
-        <input name="listing[title]" placeholder="Add a catchy title" type="text" class="form-control" required>
+<div class="row mt-3">
+  <div class="col-10 offset-1 col-lg-8 offset-lg-2">
+    <h3>Host a Room in Kenya</h3>
+    <form method="POST" action="/listings" novalidate class="needs-validation" enctype="multipart/form-data">
+      <div class="row">
+        <div class="mb-3 col-md-8">
+          <label for="title" class="form-label">Room title</label>
+          <input id="title" name="listing[title]" placeholder="Westlands Executive King Room" type="text" class="form-control" required>
+          <div class="valid-feedback">Title looks good!</div>
+        </div>
 
-        <div class="valid-feedback">Title looks good!</div>
+        <div class="mb-3 col-md-4">
+          <label for="roomType" class="form-label">Room type</label>
+          <select id="roomType" name="listing[roomType]" class="form-select" required>
+            <option value="Private room">Private room</option>
+            <option value="Studio">Studio</option>
+            <option value="Suite">Suite</option>
+            <option value="Guest suite">Guest suite</option>
+            <option value="Apartment">Apartment</option>
+          </select>
+        </div>
       </div>
-  
-        <div class="mb-3">
-           <lable for="description" class="form-label">Description</lable>
-           <textarea name="listing[description]"   type="text" class="form-control" required></textarea>
-           <div class="invalid-feedback">please enter a short description</div>
-        </div>
-        
-         <div class="mb-3">
-          <lable for="image" class="form-label">Upload Listing Image</lable>
-           <input name="listing[image]" type="file"  class="form-control" required>
-         </div>
 
-         <div class="row">
-            <div class="mb-3 col-md-4">
-          <lable for="price" class="form-label">Price</lable>
-         <input name="listing[price]" placeholder="1200" class="form-control" required>
-          <div class="invalid-feedback">Price should be valid</div>
+      <div class="mb-3">
+        <label for="description" class="form-label">Description</label>
+        <textarea id="description" name="listing[description]" class="form-control" rows="4" required></textarea>
+        <div class="invalid-feedback">Please enter a short description</div>
+      </div>
 
+      <div class="mb-3">
+        <label for="image" class="form-label">Upload room image</label>
+        <input id="image" name="listing[image]" type="file" class="form-control" required>
+      </div>
+
+      <div class="row">
+        <div class="mb-3 col-md-4">
+          <label for="price" class="form-label">Nightly rate (KES)</label>
+          <input id="price" name="listing[price]" placeholder="6500" type="number" min="0" class="form-control" required>
+          <div class="invalid-feedback">Nightly rate should be valid</div>
         </div>
-         <div class="mb-3 col-md-8">
-             <lable for="country" class="form-label">Country</lable>
-               <input name="listing[country]" placeholder="India" type="text" class="form-control" required>
-               <div class="invalid-feedback">Country name should be valid</div>
+
+        <div class="mb-3 col-md-4">
+          <label for="cleaningFee" class="form-label">Cleaning fee (KES)</label>
+          <input id="cleaningFee" name="listing[pricing][cleaningFee]" value="800" type="number" min="0" class="form-control" required>
+        </div>
+
+        <div class="mb-3 col-md-4">
+          <label for="serviceFeePercent" class="form-label">Service fee (%)</label>
+          <input id="serviceFeePercent" name="listing[pricing][serviceFeePercent]" value="8" type="number" min="0" max="30" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="mb-3 col-md-4">
+          <label for="minStay" class="form-label">Minimum stay</label>
+          <input id="minStay" name="listing[pricing][minStay]" value="1" type="number" min="1" max="30" class="form-control" required>
+        </div>
+
+        <div class="mb-3 col-md-4">
+          <label for="occupancyTarget" class="form-label">Occupancy target (%)</label>
+          <input id="occupancyTarget" name="listing[pricing][occupancyTarget]" value="75" type="number" min="0" max="100" class="form-control" required>
+        </div>
+
+        <div class="mb-3 col-md-4">
+          <label for="maxGuests" class="form-label">Max guests</label>
+          <input id="maxGuests" name="listing[maxGuests]" value="2" type="number" min="1" max="20" class="form-control" required>
+        </div>
+      </div>
+
+      <div class="smart-pricing-section mb-3">
+        <div class="form-check form-switch mb-3">
+          <input class="form-check-input" type="checkbox" role="switch" id="smartPricingEnabled" name="listing[pricing][smartPricingEnabled]" value="true" checked>
+          <label class="form-check-label" for="smartPricingEnabled">Enable smart pricing</label>
+        </div>
+
+        <div class="row">
+          <div class="mb-3 col-md-4">
+            <label for="weekendMultiplier" class="form-label">Weekend multiplier</label>
+            <input id="weekendMultiplier" name="listing[pricing][weekendMultiplier]" value="1.15" type="number" min="0.5" max="5" step="0.05" class="form-control">
           </div>
-         </div>
-        
-          <div class="mb-3">
-             <lable for="location" class="form-label">Location</lable>
-              <input name="listing[location]" placeholder="jaipur,Rajasthan" type="text" class="form-control" required>
-              <div class="invalid-feedback">Location should be valid</div>
+          <div class="mb-3 col-md-4">
+            <label for="peakSeasonMultiplier" class="form-label">Peak multiplier</label>
+            <input id="peakSeasonMultiplier" name="listing[pricing][peakSeasonMultiplier]" value="1.25" type="number" min="0.5" max="5" step="0.05" class="form-control">
           </div>
-         
-          
-<button class="btn btn-dark add-btn mt-3">Add</button>
- 
+          <div class="mb-3 col-md-4">
+            <label for="offPeakMultiplier" class="form-label">Off-peak multiplier</label>
+            <input id="offPeakMultiplier" name="listing[pricing][offPeakMultiplier]" value="0.90" type="number" min="0.5" max="5" step="0.05" class="form-control">
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="mb-3 col-md-3">
+            <label for="peakSeasonStart" class="form-label">Peak starts</label>
+            <input id="peakSeasonStart" name="listing[pricing][peakSeasonStart]" type="date" class="form-control">
+          </div>
+          <div class="mb-3 col-md-3">
+            <label for="peakSeasonEnd" class="form-label">Peak ends</label>
+            <input id="peakSeasonEnd" name="listing[pricing][peakSeasonEnd]" type="date" class="form-control">
+          </div>
+          <div class="mb-3 col-md-3">
+            <label for="offPeakStart" class="form-label">Off-peak starts</label>
+            <input id="offPeakStart" name="listing[pricing][offPeakStart]" type="date" class="form-control">
+          </div>
+          <div class="mb-3 col-md-3">
+            <label for="offPeakEnd" class="form-label">Off-peak ends</label>
+            <input id="offPeakEnd" name="listing[pricing][offPeakEnd]" type="date" class="form-control">
+          </div>
+        </div>
+
+        <label class="form-label">Major event pricing</label>
+        <% [0, 1, 2].forEach((index) => { %>
+          <div class="row event-row">
+            <div class="mb-2 col-md-4">
+              <input name="listing[pricing][events][<%= index %>][name]" placeholder="Event name" type="text" class="form-control">
+            </div>
+            <div class="mb-2 col-md-3">
+              <input name="listing[pricing][events][<%= index %>][startDate]" type="date" class="form-control">
+            </div>
+            <div class="mb-2 col-md-3">
+              <input name="listing[pricing][events][<%= index %>][endDate]" type="date" class="form-control">
+            </div>
+            <div class="mb-2 col-md-2">
+              <input name="listing[pricing][events][<%= index %>][multiplier]" placeholder="1.30" type="number" min="0.5" max="5" step="0.05" class="form-control">
+            </div>
+          </div>
+        <% }) %>
+      </div>
+
+      <div class="row">
+        <div class="mb-3 col-md-6">
+          <label for="county" class="form-label">County</label>
+          <input id="county" name="listing[county]" placeholder="Nairobi" type="text" class="form-control" required>
+          <div class="invalid-feedback">County is required</div>
+        </div>
+
+        <div class="mb-3 col-md-6">
+          <label for="location" class="form-label">Area or estate</label>
+          <input id="location" name="listing[location]" placeholder="Kilimani" type="text" class="form-control" required>
+          <div class="invalid-feedback">Location is required</div>
+        </div>
+      </div>
+
+      <input name="listing[country]" value="Kenya" type="hidden">
+
+      <div class="mb-3">
+        <label class="form-label">Amenities</label>
+        <div class="amenity-grid">
+          <% ["Wi-Fi", "Workspace", "Breakfast", "Secure parking", "Air conditioning", "Kitchenette", "Pool", "Backup power"].forEach((amenity) => { %>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="listing[amenities]" value="<%= amenity %>" id="amenity-<%= amenity.replace(/\s+/g, '-').toLowerCase() %>">
+              <label class="form-check-label" for="amenity-<%= amenity.replace(/\s+/g, '-').toLowerCase() %>"><%= amenity %></label>
+            </div>
+          <% }) %>
+        </div>
+      </div>
+
+      <button class="btn btn-dark add-btn mt-3">Publish room</button>
     </form>
-    </div>
-    </div>
- 
+  </div>
+</div>
