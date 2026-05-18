@@ -78,7 +78,11 @@ module.exports.createBooking = async (req, res) => {
     await booking.save();
   } catch (mpesaErr) {
     // Don't throw — keep the pending booking but warn the guest
-    console.error("STK Push failed:", mpesaErr.response?.data || mpesaErr.message);
+    console.error("STK Push failed:", {
+      status: mpesaErr.response?.status,
+      data: mpesaErr.response?.data,
+      message: mpesaErr.message,
+    });
     req.flash(
       "error",
       "Could not reach M-Pesa. Your booking is saved — please contact support to complete payment."

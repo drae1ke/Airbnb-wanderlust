@@ -5,10 +5,27 @@ const CONSUMER_SECRET = process.env.MPESA_CONSUMER_SECRET;
 const SHORTCODE = process.env.MPESA_SHORTCODE;
 const PASSKEY = process.env.MPESA_PASSKEY;
 const CALLBACK_URL = process.env.MPESA_CALLBACK_URL;
+const MPESA_ENV = (process.env.MPESA_ENV || "sandbox").toLowerCase();
 
 const SANDBOX_BASE = "https://sandbox.safaricom.co.ke";
 const PROD_BASE = "https://api.safaricom.co.ke";
-const BASE_URL = process.env.NODE_ENV === "production" ? PROD_BASE : SANDBOX_BASE;
+const BASE_URL = MPESA_ENV === "production" ? PROD_BASE : SANDBOX_BASE;
+
+if (!["sandbox", "production"].includes(MPESA_ENV)) {
+  throw new Error('MPESA_ENV must be either "sandbox" or "production"');
+}
+
+const missingMpesaEnv = [
+  "MPESA_CONSUMER_KEY",
+  "MPESA_CONSUMER_SECRET",
+  "MPESA_SHORTCODE",
+  "MPESA_PASSKEY",
+  "MPESA_CALLBACK_URL",
+].filter((key) => !process.env[key]);
+
+if (missingMpesaEnv.length) {
+  throw new Error(`Missing M-Pesa environment variables: ${missingMpesaEnv.join(", ")}`);
+}
 
 async function getAccessToken() {
   const credentials = Buffer.from(`${CONSUMER_KEY}:${CONSUMER_SECRET}`).toString("base64");
