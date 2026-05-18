@@ -109,6 +109,12 @@
                 <div class="metric-row total"><span>Total</span><b id="bookingTotal">KES 0</b></div>
               </div>
               <p id="bookingRules" class="booking-rules text-muted"></p>
+              <div class="mb-3">
+  <label for="phone" class="form-label">M-Pesa phone number</label>
+  <input id="phone" name="booking[phone]" type="tel"
+         placeholder="07XXXXXXXX" class="form-control" required>
+  <div class="invalid-feedback">Enter a valid Safaricom number</div>
+</div>
 
               <button class="btn btn-dark add-btn w-100 mt-3">Reserve</button>
             </form>

@@ -54,5 +54,6 @@ module.exports.bookingSchema = Joi.object({
     checkIn: Joi.date().iso().required(),
     checkOut: Joi.date().iso().greater(Joi.ref("checkIn")).required(),
     guests: Joi.number().integer().required().min(1).max(20),
+    phone: Joi.string().required().pattern(/^(07|2547|\+2547)\d{8}$/),
   }).required(),
 });

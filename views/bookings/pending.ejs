@@ -1,0 +1,79 @@
+<% layout('layouts/boilerplate') %>
+
+<div class="row mt-5">
+  <div class="col-md-6 offset-md-3 text-center">
+    <div id="payment-status">
+      <div class="mb-4">
+        <i class="fa-brands fa-square-phone" style="font-size:3rem;color:#4caf50"></i>
+      </div>
+      <h3>Waiting for payment</h3>
+      <p class="text-muted">
+        An M-Pesa prompt has been sent to your phone.<br>
+        Enter your PIN to confirm the booking for
+        <b><%= booking.listing ? booking.listing.title : "this listing" %></b>.
+      </p>
+      <p class="text-muted small">
+        Total: <b>KES <%= Number(booking.totalPrice).toLocaleString("en-KE") %></b>
+      </p>
+
+      <div id="pending-state">
+        <div class="spinner-border text-success mb-3" role="status">
+          <span class="visually-hidden">Checking payment…</span>
+        </div>
+        <p class="text-muted small">Checking payment status…</p>
+      </div>
+
+      <div id="confirmed-state" style="display:none">
+        <div class="alert alert-success">
+          <i class="fa-solid fa-circle-check me-2"></i>
+          Payment confirmed! Your booking is secured.
+        </div>
+        <a href="/listings/<%= booking.listing ? booking.listing._id : '' %>" class="btn btn-dark mt-2">
+          Back to listing
+        </a>
+      </div>
+
+      <div id="failed-state" style="display:none">
+        <div class="alert alert-danger">
+          <i class="fa-solid fa-circle-xmark me-2"></i>
+          Payment was not completed. Your booking has been cancelled.
+        </div>
+        <a href="/listings/<%= booking.listing ? booking.listing._id : '' %>" class="btn btn-outline-dark mt-2">
+          Try again
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const bookingId = "<%= booking._id %>";
+    let attempts = 0;
+    const MAX_ATTEMPTS = 40; // ~2 min at 3s intervals
+
+    function poll() {
+      fetch(`/bookings/${bookingId}/status`)
+        .then((r) => r.json())
+        .then(({ status }) => {
+          if (status === "confirmed") {
+            document.getElementById("pending-state").style.display = "none";
+            document.getElementById("confirmed-state").style.display = "block";
+          } else if (status === "failed" || status === "cancelled") {
+            document.getElementById("pending-state").style.display = "none";
+            document.getElementById("failed-state").style.display = "block";
+          } else if (++attempts < MAX_ATTEMPTS) {
+            setTimeout(poll, 3000);
+          } else {
+            document.getElementById("pending-state").innerHTML =
+              '<p class="text-muted small">Still waiting — refresh the page to check again.</p>';
+          }
+        })
+        .catch(() => {
+          if (++attempts < MAX_ATTEMPTS) setTimeout(poll, 5000);
+        });
+    }
+
+    setTimeout(poll, 3000);
+  })();
+</script>

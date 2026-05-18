@@ -4,6 +4,12 @@ const wrapAsync = require("../utils/wrapAsync.js");
 const { isLoggedIn, validateBooking } = require("../middleware.js");
 const bookingController = require("../controllers/bookings.js");
 
-router.post("/", isLoggedIn, validateBooking, wrapAsync(bookingController.createBooking));
+// POST /listings/:id/bookings  — create booking + fire STK Push
+router.post(
+  "/",
+  isLoggedIn,
+  validateBooking,
+  wrapAsync(bookingController.createBooking)
+);
 
 module.exports = router;
