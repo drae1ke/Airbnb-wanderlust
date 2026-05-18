@@ -3,10 +3,37 @@ const Review=require("./models/review");
 const ExpressError=require("./utils/ExpressError.js");
 const {listingSchema,reviewSchema,bookingSchema}=require("./schema.js");
 
+function getSafeRedirectUrl(req) {
+  const referer = req.get("referer");
+
+  if (!referer) return null;
+
+  try {
+    const refererUrl = new URL(referer);
+
+    if (refererUrl.host !== req.get("host")) return null;
+    if (refererUrl.pathname === "/login") return null;
+
+    return `${refererUrl.pathname}${refererUrl.search}`;
+  } catch (err) {
+    return null;
+  }
+}
+
 
 module.exports.isLoggedIn=(req,res,next)=>{
      if(!req.isAuthenticated()){
-      req.session.redirectUrl=req.originalUrl;
+      if (req.method === "GET") {
+        req.session.redirectUrl=req.originalUrl;
+      } else {
+        const safeRedirectUrl = getSafeRedirectUrl(req);
+
+        if (safeRedirectUrl) {
+          req.session.redirectUrl = safeRedirectUrl;
+        } else {
+          delete req.session.redirectUrl;
+        }
+      }
       req.flash("error","You must be logged in!");
      return res.redirect("/login");
   }
@@ -16,6 +43,7 @@ module.exports.isLoggedIn=(req,res,next)=>{
 module.exports.saveRedirectUrl=(req,res,next)=>{
   if(req.session.redirectUrl){
     res.locals.redirectUrl=req.session.redirectUrl;
+    delete req.session.redirectUrl;
   }
   next();
 };
